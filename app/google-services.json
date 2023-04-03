@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "726715854694",
+    "project_id": "kot4talk",
+    "storage_bucket": "kot4talk.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:726715854694:android:a70f5cba108452a04122a7",
+        "android_client_info": {
+          "package_name": "com.example.kot4talk"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "726715854694-61dekud7av1fkvq7fck29s0o6pp0slhg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.kot4talk",
+            "certificate_hash": "7b80212f4a3bd63729fbdae2761e0632938cce8d"
+          }
+        },
+        {
+          "client_id": "726715854694-2e366g08dqndn8gkk95fmptnd4ofio48.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIV4s_VatkRARqS0dcuNJl1mOoSbMs9Dk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "726715854694-2e366g08dqndn8gkk95fmptnd4ofio48.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

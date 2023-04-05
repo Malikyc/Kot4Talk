@@ -21,18 +21,21 @@
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilEmail"
         android:layout_width="0dp"
+        android:textColorHint="@color/white"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/tilPassword"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed"
+        app:errorTextAppearance="@style/error_appearance"
         tools:layout_editor_absoluteX="1dp"
         tools:layout_editor_absoluteY="177dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etEmail"
             android:textColor="@color/white"
+            android:textColorHint="@color/white"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#85112C"
@@ -43,11 +46,13 @@
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilPassword"
         android:layout_width="0dp"
+        android:textColorHint="@color/white"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@id/registrationbButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tilEmail"
+        app:errorTextAppearance="@style/error_appearance"
         tools:layout_editor_absoluteX="1dp"
         tools:layout_editor_absoluteY="177dp">
 
@@ -58,6 +63,7 @@
             android:background="#84112C"
             android:textColorHint="@color/white"
             android:hint="@string/Password"
+            android:textColor="@color/white"
             android:inputType="textPassword" />
 
     </com.google.android.material.textfield.TextInputLayout>

@@ -1,38 +1,96 @@
 package com.example.kot4talk.presentation
 
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
+import android.text.Editable
+import android.text.TextWatcher
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import com.example.kot4talk.R
-import com.example.kot4talk.data.MessengerRepositoryImpl
+import androidx.lifecycle.ViewModelProvider
 import com.example.kot4talk.databinding.ActivityRegBinding
 import com.example.kot4talk.domain.entities.User
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.launch
+import com.example.kot4talk.presentation.viewModels.AuthViewModel
 
 class RegActivity : AppCompatActivity() {
 
     private val binding by lazy {
         ActivityRegBinding.inflate(layoutInflater)
     }
-    private val auth = Firebase.auth
+
+    private val viewModel by lazy {
+        ViewModelProvider(this)[AuthViewModel::class.java]
+    }
+
+    private lateinit var user : User
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        val rep = MessengerRepositoryImpl(application, Firebase.firestore, Firebase.auth)
-        auth.signInWithEmailAndPassword("mil@mail.ru","hel456")
-        lifecycleScope.launch {
-            rep.getUserList().collect {
-                Log.i("LETSSEE", it.toString())
+        subscribeOnLiveData()
+        onEditTextListenerAddition()
+        setButtonClickListener()
+    }
+
+    private fun setButtonClickListener() {
+        binding.registrationbButton.setOnClickListener {
+            with(binding){
+                val email  = etEmail.text.toString()
+                val password = etPassword.text.toString()
+                 user = User(email = email,password = password)
+                viewModel.registerUser(user)
+            }
+
+        }
+    }
+
+
+    private fun onEditTextListenerAddition() {
+        binding.etEmail.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                viewModel.resetEmailError()
+                viewModel.resetPasswordError()
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+            }
+        })
+        binding.etPassword.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                viewModel.resetPasswordError()
+                viewModel.resetEmailError()
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+            }
+        })
+    }
+
+    private fun subscribeOnLiveData() {
+        viewModel.emailIsInError.observe(this) {
+            if (it == true) {
+                binding.tilEmail.error = "Error"
+            } else {
+                binding.tilEmail.error = null
+            }
+
+        }
+        viewModel.passwordIsInError.observe(this) {
+            if (it == true) {
+                binding.tilPassword.error = "Error"
+            } else {
+                binding.tilPassword.error = null
             }
         }
-        binding.registrationbButton.setOnClickListener{
-            val user = User("mil556@mail.ru","//","hel456")
-            rep.addUser(user)
+        viewModel.shouldBeClosed.observe(this) {
+            if (it == true) {
+                startActivity(MainActivity.newIntent(this@RegActivity,user.email))
+            }
         }
     }
 }
+

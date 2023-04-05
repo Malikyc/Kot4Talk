@@ -7,29 +7,25 @@ import com.example.kot4talk.domain.entities.Chat
 import com.example.kot4talk.domain.entities.Message
 import com.example.kot4talk.domain.entities.User
 import com.example.kot4talk.domain.repository.MessengerRepository
-import com.example.kot4talk.presentation.RegActivity
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObject
-import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 class MessengerRepositoryImpl(private val application: Application,
                               private val db : FirebaseFirestore,
 private val auth : FirebaseAuth) : MessengerRepository {
 
-    private val scope = CoroutineScope(Dispatchers.Main)
+    private val scope = CoroutineScope(Dispatchers.Default)
 
-    override fun addUser(user: User) {
+    override fun addUser(user: User) : MutableSharedFlow<Exception> {
+        val flowError = MutableSharedFlow<Exception>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     auth.createUserWithEmailAndPassword(user.email,user.password)
         .addOnCompleteListener{ task ->
             if (task.isSuccessful) {
@@ -41,14 +37,19 @@ private val auth : FirebaseAuth) : MessengerRepository {
                     .addOnFailureListener{
                         Log.i("ITHAPPENED","Exception:$it")
                     }
+                scope.launch {
+                    flowError.emit(RuntimeException())
+                }
             } else {
                 Toast.makeText(application, "Authentication failed.",
                     Toast.LENGTH_SHORT).show()
-                Log.i("LETSSEE","${task.exception}")
-
+                Log.i("LETSSEETRUE","${task.exception}")
+                scope.launch {
+                flowError.emit(task.exception!!)
+            }
             }
         }
-
+       return flowError
 
     }
 
@@ -59,7 +60,7 @@ private val auth : FirebaseAuth) : MessengerRepository {
     }
 
     override fun startChat(chat: Chat) {
-        var chat1 : Chat? = null
+        var chat1 : Chat?
      db.collection(CHAT_COLL).document(chat.name).get().addOnSuccessListener {
                  chat1 = it.toObject<Chat>()
          if(chat1 == null) {
@@ -73,7 +74,7 @@ private val auth : FirebaseAuth) : MessengerRepository {
     }
 
     override  fun getUserList(): MutableSharedFlow<List<User>> {
-        val flow = MutableSharedFlow<List<User>>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        val flow = MutableSharedFlow<List<User>>(extraBufferCapacity = 1,onBufferOverflow = BufferOverflow.DROP_OLDEST)
             val listOfUsers = mutableListOf<User>()
             db.collection(USER_COLL).addSnapshotListener { snapshot, e ->
                 if (e != null) {
@@ -91,7 +92,8 @@ private val auth : FirebaseAuth) : MessengerRepository {
     }
 
     override fun getChatList(user: User): MutableSharedFlow<List<Chat>> {
-        val flow = MutableSharedFlow<List<Chat>>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        val flow = MutableSharedFlow<List<Chat>>(extraBufferCapacity = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST)
         val listOfChats = mutableListOf<Chat>()
         db.collection(CHAT_COLL).addSnapshotListener{
             snapshot,e->
@@ -114,7 +116,8 @@ private val auth : FirebaseAuth) : MessengerRepository {
     }
 
     override fun getMessageList(chat : Chat): MutableSharedFlow<List<Message>> {
-        val flow = MutableSharedFlow<List<Message>>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        val flow = MutableSharedFlow<List<Message>>(extraBufferCapacity = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST)
         var listOfMessage = mutableListOf<Message>()
         db.collection(CHAT_COLL).addSnapshotListener{
                 snapshot,e->
@@ -141,12 +144,40 @@ private val auth : FirebaseAuth) : MessengerRepository {
         return currentUser != null
     }
 
-    override fun signIn(user: User) {
-        auth.signInWithEmailAndPassword(user.email,user.password)
+    override fun signIn(user: User) : MutableSharedFlow<Exception> {
+        val flowError = MutableSharedFlow<Exception>()
+        auth.signInWithEmailAndPassword(user.email,
+            user.password)
+            .addOnSuccessListener {
+                scope.launch {
+                    flowError.emit(RuntimeException())
+                }
+            }
+            .addOnFailureListener {
+            scope.launch {
+                flowError.emit(it)
+            }
+            }
+        return flowError
     }
 
     override fun signOut() {
         auth.signOut()
+    }
+
+    override fun getCurrentUser(email : String): MutableSharedFlow<User> {
+        val flow = MutableSharedFlow<User>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        db.collection(USER_COLL).document(email).get().addOnSuccessListener {
+            val user = it.toObject<User>()
+            if(user == null){
+                Log.i("INTERESTING","User not found")
+                return@addOnSuccessListener
+            }
+            scope.launch {
+            flow.emit(user)
+            }
+        }
+        return flow
     }
 
     companion object{
